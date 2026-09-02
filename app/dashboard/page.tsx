@@ -22,6 +22,10 @@ export default async function Dashboard() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 py-16 md:py-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+        <div className="flex items-center gap-4 mb-4">
+          <Link href="/" className="text-sm text-amber-300 hover:text-amber-100 font-medium">← Home</Link>
+          <Link href="/upload" className="text-sm text-amber-300 hover:text-amber-100 font-medium">+ New Deck</Link>
+        </div>
           <div>
             <h1 className="font-[family-name:var(--font-serif)] text-6xl md:text-8xl text-white tracking-tighter leading-[0.9] mb-3">
               Your Decks.
