@@ -32,7 +32,7 @@ export default function Home() {
                 Get Started
               </Link>
               <div className="flex items-center">
-                <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-9 h-9", userButtonTrigger: "focus:outline-none" } }} />
+                <UserButton  appearance={{ elements: { avatarBox: "w-9 h-9", userButtonTrigger: "focus:outline-none" } }} />
               </div>
               <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-white p-2" aria-label="Menu">
                 {mobileOpen ? <X size={22} /> : <Menu size={22} />}
