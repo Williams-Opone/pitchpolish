@@ -1,102 +1,138 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { supabaseServer } from "@/lib/supabase-server";
 import Link from "next/link";
-import { ArrowUpRight, Upload } from "lucide-react";
-import UpgradeButton from "@/components/UpgradeButton";
+import { desc } from "drizzle-orm";
+import { db } from "@/db";
+import { reports } from "@/db/schema";
+import Shell from "@/components/Shell";
+import GenerateSampleButton from "@/components/GenerateSampleButton";
+import { Reveal } from "@/components/fx";
+import { SpotlightCard } from "@/components/premium";
+import { IconArrow, IconFlag } from "@/components/icons";
 
-export default async function Dashboard() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+export const dynamic = "force-dynamic";
 
-  const sb = supabaseServer();
-  const { data: decks } = await sb
-    .from("decks")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+const scoreTone = (s: number) =>
+  s >= 80
+    ? "text-moss-300 border-moss-400/30 bg-moss-400/[0.08]"
+    : s >= 55
+      ? "text-copper-300 border-copper-400/30 bg-copper-400/[0.08]"
+      : "text-flame-300 border-flame-400/30 bg-flame-400/[0.08]";
+
+export default async function DashboardPage() {
+  const rows = await db.select().from(reports).orderBy(desc(reports.createdAt)).limit(50);
+
+  const avg = rows.length ? Math.round(rows.reduce((a, r) => a + r.score, 0) / rows.length) : 0;
+  const best = rows.length ? Math.max(...rows.map((r) => r.score)) : 0;
 
   return (
-    <main className="min-h-screen bg-[#080c16] text-[#e8e8f0] font-[family-name:var(--font-sans)] selection:bg-amber-500/20">
-      <div className="fixed top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-amber-400/[0.04] to-transparent pointer-events-none z-0" />
-
-      <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10 py-16 md:py-20">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
-        <div className="flex items-center gap-4 mb-4">
-          <Link href="/" className="text-sm text-amber-300 hover:text-amber-100 font-medium">← Home</Link>
-          <Link href="/upload" className="text-sm text-amber-300 hover:text-amber-100 font-medium">+ New Deck</Link>
-        </div>
-          <div>
-            <h1 className="font-[family-name:var(--font-serif)] text-6xl md:text-8xl text-white tracking-tighter leading-[0.9] mb-3">
-              Your Decks.
-            </h1>
-            <p className="text-slate-400 text-lg font-light">Every analysis. Every fix.</p>
+    <Shell>
+      <div className="mx-auto max-w-6xl px-6 py-16 md:px-10 md:py-24">
+        <Reveal>
+          <div className="mb-5 font-mono text-[10.5px] uppercase tracking-[0.28em] text-copper-300">
+            The ledger
           </div>
-          <div className="flex gap-3">
-            <Link href="/upload" className="inline-flex items-center gap-2.5 bg-amber-400 text-[#080c16] px-6 py-3.5 rounded-full font-bold text-base hover:bg-amber-300 transition shadow-[0_0_40px_-12px_rgba(240,199,94,0.3)] hover:-translate-y-0.5">
-              <Upload size={18} /> New Deck
-            </Link>
-            <UpgradeButton />
-          </div>
-        </div>
+          <h1 className="font-display text-5xl leading-[0.92] tracking-tighter text-paper md:text-7xl">
+            Your verdicts<span className="text-copper-400">.</span>
+          </h1>
+        </Reveal>
 
-        {(!decks || decks.length === 0) && (
-          <div className="border border-white/[0.08] rounded-[2.5rem] bg-gradient-to-b from-white/[0.04] to-transparent p-16 md:p-24 text-center">
-            <h2 className="font-[family-name:var(--font-serif)] text-5xl md:text-7xl text-white mb-6 tracking-tighter">No decks.</h2>
-            <p className="text-slate-400 text-xl mb-10 max-w-md mx-auto">Upload your first pitch deck to get a score card, red flags, and specific fixes.</p>
-            <Link href="/upload" className="inline-block bg-amber-400 text-[#080c16] px-10 py-4 rounded-full font-bold text-xl hover:bg-amber-300 transition shadow-[0_0_50px_-12px_rgba(240,199,94,0.3)]">
-              Upload Now
-            </Link>
-          </div>
-        )}
-
-        <div className="grid gap-5">
-          {decks?.map((d: any) => {
-            const score = d.analysis_result?.overall_score ?? null;
-            const isAnalyzed = d.status === "analyzed";
-
-            return (
-              <Link
-                key={d.id}
-                href={`/report/${d.id}`}
-                className="group relative bg-gradient-to-r from-[#0f1120]/90 to-[#0c0f16] border border-white/[0.07] hover:border-amber-400/30 rounded-[2rem] p-8 md:p-10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_-15px_rgba(240,199,94,0.12)]"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-[family-name:var(--font-serif)] text-2xl md:text-3xl text-white truncate group-hover:text-amber-300 transition-colors max-w-xs md:max-w-2xl">
-                        {d.file_name}
-                      </h3>
-                      <ArrowUpRight size={20} className="text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-slate-400">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${isAnalyzed ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-700 text-slate-300"}`}>
-                        {isAnalyzed ? "Analyzed" : "Pending"}
-                      </span>
-                      <span>{new Date(d.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6 md:pl-6 md:border-l md:border-white/[0.08]">
-                    <div className="text-right">
-                      {score !== null ? (
-                        <div className="text-5xl md:text-6xl font-[family-name:var(--font-serif)] text-amber-300 leading-none tracking-tighter">{score}</div>
-                      ) : (
-                        <div className="text-4xl font-[family-name:var(--font-serif)] text-slate-600 leading-none">—</div>
-                      )}
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">Score</div>
-                    </div>
-                    <div className="hidden md:block w-px h-10 bg-white/[0.1]" />
-                    <div className="text-sm text-slate-400 leading-snug max-w-[220px] hidden md:block">
-                      {isAnalyzed ? (d.analysis_result?.summary || "Open for full report and fixes.") : "Click to analyze and generate score card."}
-                    </div>
-                  </div>
+        {rows.length > 0 ? (
+          <>
+            <Reveal delay={100}>
+              <dl className="mt-10 flex flex-wrap gap-x-14 gap-y-6 border-y border-paper/[0.08] py-7">
+                <div>
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.25em] text-paper-dim/70">Decks scored</dt>
+                  <dd className="mt-1 font-display text-4xl text-paper">{rows.length}</dd>
                 </div>
-              </Link>
-            );
-          })}
-        </div>
+                <div>
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.25em] text-paper-dim/70">Average score</dt>
+                  <dd className="mt-1 font-display text-4xl text-copper-300">{avg}</dd>
+                </div>
+                <div>
+                  <dt className="font-mono text-[10px] uppercase tracking-[0.25em] text-paper-dim/70">Best score</dt>
+                  <dd className="mt-1 font-display text-4xl text-moss-300">{best}</dd>
+                </div>
+              </dl>
+            </Reveal>
+
+            <div className="mt-10 space-y-3">
+              {rows.map((r, i) => (
+                <Reveal key={r.id} delay={Math.min(i * 60, 300)}>
+                  <Link href={`/report/${r.id}`} className="group block">
+                    <SpotlightCard
+                      radius="1.25rem"
+                      className="border border-paper/[0.08] bg-ink-800/50 transition-transform duration-300 group-hover:-translate-y-0.5"
+                    >
+                      <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:gap-8">
+                    <div className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl border font-display ${scoreTone(r.score)}`}>
+                      <span className="text-2xl leading-none">{r.score}</span>
+                      <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.15em] opacity-70">/100</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <h2 className="font-display text-xl tracking-tight text-paper transition-colors group-hover:text-copper-300 md:text-2xl">
+                          {r.deckName}
+                        </h2>
+                        {r.isSample && (
+                          <span className="rounded-full border border-copper-400/30 bg-copper-400/[0.08] px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-copper-300">
+                            Sample
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.18em] text-paper-dim/80">
+                        {r.band} · {r.slideCount} pages ·{" "}
+                        {r.redFlags.length > 0 ? `${r.redFlags.length} red flag${r.redFlags.length > 1 ? "s" : ""}` : "no red flags"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-5">
+                      <span className="font-mono text-[10.5px] uppercase tracking-[0.18em] text-paper-dim/60">
+                        {new Date(r.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                      </span>
+                      <IconArrow size={17} className="text-paper-dim transition-all duration-300 group-hover:translate-x-1 group-hover:text-copper-300" />
+                      </div>
+                      </div>
+                    </SpotlightCard>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal delay={200}>
+              <div className="mt-12">
+                <Link
+                  href="/upload"
+                  className="group inline-flex items-center gap-3 rounded-full bg-copper-400 px-8 py-4 text-base font-bold text-ink-950 transition-all duration-300 hover:-translate-y-0.5 hover:bg-copper-300"
+                >
+                  Score another deck
+                  <IconArrow size={17} className="transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </Reveal>
+          </>
+        ) : (
+          <Reveal delay={100}>
+            <div className="mt-12 rounded-[2rem] border border-paper/[0.08] bg-ink-800/50 p-10 text-center md:p-16">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-copper-400/25 bg-copper-400/[0.07] text-copper-300">
+                <IconFlag size={22} />
+              </div>
+              <h2 className="font-display text-3xl tracking-tight text-paper md:text-4xl">No verdicts yet.</h2>
+              <p className="mx-auto mt-3 max-w-md leading-relaxed text-paper-dim">
+                Upload your first deck and get a nine-dimension score with every red flag named —
+                or open the sample to see what a full report looks like.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  href="/upload"
+                  className="group inline-flex items-center gap-3 rounded-full bg-copper-400 px-7 py-3.5 text-base font-bold text-ink-950 transition-all duration-300 hover:-translate-y-0.5 hover:bg-copper-300"
+                >
+                  Analyze your deck
+                  <IconArrow size={16} className="transition-transform group-hover:translate-x-1" />
+                </Link>
+                <GenerateSampleButton />
+              </div>
+            </div>
+          </Reveal>
+        )}
       </div>
-    </main>
+    </Shell>
   );
 }

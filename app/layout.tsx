@@ -1,24 +1,42 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
-import Providers from "@/components/Providers";
+import type { ReactNode } from "react";
+import { Instrument_Serif, Manrope, IBM_Plex_Mono } from "next/font/google";
+import { MotionProvider } from "@/components/premium";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const serifFont = Instrument_Serif({ subsets: ["latin"], variable: "--font-serif", weight: "400" });
+const display = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-display",
+});
+
+const sans = Manrope({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
-  title: "PitchPolish — AI Pitch Review",
-  description: "Like a $200/hr VC partner, for $19/mo.",
+  title: "PitchPolish — Not a pitch. A score.",
+  description:
+    "Upload your pitch deck. PitchPolish reads every slide, scores it against investor benchmarks across nine dimensions, and tells you exactly what to fix.",
+  icons: {
+    icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c0a08'/%3E%3Ctext x='16' y='23' font-family='Georgia' font-size='19' fill='%23d6814f' text-anchor='middle' font-style='italic'%3EP.%3C/text%3E%3C/svg%3E",
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <Providers>
-      <html lang="en" className={`${inter.variable} ${serifFont.variable} dark`} suppressHydrationWarning>
-        <body className="bg-[#080c16] text-[#e8e8f0] font-sans antialiased selection:bg-amber-500/20">
-          {children}
-        </body>
-      </html>
-    </Providers>
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+      <body className="bg-ink-900 text-paper font-sans antialiased">
+        <MotionProvider>{children}</MotionProvider>
+      </body>
+    </html>
   );
 }
