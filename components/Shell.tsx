@@ -1,21 +1,22 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Background3D from "@/components/Background3D";
+import SessionSlot from "@/components/SessionSlot";
 import { IconArrow } from "@/components/icons";
 
 export default function Shell({ children }: { children: ReactNode }) {
   return (
     <>
       <Background3D />
-      <div className="grain pointer-events-none fixed inset-0 z-[9999] opacity-[0.04]" aria-hidden="true" />
+      <div className="grain pointer-events-none fixed inset-0 z-[9999] opacity-[0.045]" aria-hidden="true" />
 
       <nav className="sticky top-0 z-50 border-b border-paper/[0.07] bg-ink-900/75 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
           <Link href="/" className="font-display text-2xl tracking-tight text-paper">
-            Pitch<span className="text-copper-400">Polish</span>
+            Pitch<span className="italic text-copper-300">Polish</span>
             <span className="text-copper-400">.</span>
           </Link>
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-5">
             <Link
               href="/dashboard"
               className="navlink hidden text-[13px] font-semibold tracking-wide text-paper-dim transition hover:text-paper sm:block"
@@ -24,11 +25,12 @@ export default function Shell({ children }: { children: ReactNode }) {
             </Link>
             <Link
               href="/upload"
-              className="group inline-flex items-center gap-2 rounded-full bg-copper-400 px-4 py-2.5 text-[13px] font-bold text-ink-950 transition-all duration-300 hover:-translate-y-0.5 hover:bg-copper-300"
+              className="btn-shine group inline-flex items-center gap-2 rounded-full bg-copper-400 px-4 py-2.5 text-[13px] font-bold text-ink-950 transition-colors duration-300 hover:bg-copper-300"
             >
               New analysis
               <IconArrow size={13} className="transition-transform group-hover:translate-x-0.5" />
             </Link>
+            <SessionSlot />
           </div>
         </div>
       </nav>

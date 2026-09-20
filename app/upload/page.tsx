@@ -141,6 +141,7 @@ export default function UploadPage() {
                   type="file"
                   accept="application/pdf,.pdf"
                   className="hidden"
+                  onClick={(e) => e.stopPropagation()}
                   onChange={(e) => accept(e.target.files?.[0] ?? undefined)}
                 />
 

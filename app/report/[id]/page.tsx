@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { reports } from "@/db/schema";
+import { canSee, getCurrentOwner } from "@/lib/owner";
+import { getTmpReport, isTmpId } from "@/lib/tmpReports";
+import type { ReportRow } from "@/lib/types";
 import Shell from "@/components/Shell";
 import CoachChat from "@/components/CoachChat";
 import { Reveal, ScoreRing } from "@/components/fx";
@@ -22,18 +25,60 @@ const toneFor = (s: number) =>
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const num = Number(id);
-  if (!Number.isInteger(num) || num <= 0) notFound();
 
-  const rows = await db.select().from(reports).where(eq(reports.id, num)).limit(1);
-  const r = rows[0];
+  let r: ReportRow | undefined;
+  let ephemeral = false;
+  let dbDown = false;
+
+  if (isTmpId(id)) {
+    // Ephemeral report — served when the analysis ran without a database.
+    r = getTmpReport(id) ?? undefined;
+    ephemeral = true;
+  } else {
+    const num = Number(id);
+    if (!Number.isInteger(num) || num <= 0) notFound();
+    try {
+      const rows = await db.select().from(reports).where(eq(reports.id, num)).limit(1);
+      r = rows[0];
+    } catch (e) {
+      console.error("report query failed:", e);
+      dbDown = true;
+    }
+  }
+
+  if (dbDown) {
+    return (
+      <Shell>
+        <div className="mx-auto max-w-2xl px-6 py-24 text-center md:px-10">
+          <h1 className="font-display text-4xl tracking-tight text-flame-300 md:text-5xl">
+            The ledger is unreachable right now.
+          </h1>
+          <p className="mt-4 leading-relaxed text-paper-dim">
+            Your session is fine — Postgres isn&apos;t. Fix{" "}
+            <span className="font-mono text-[13px] text-copper-300">DATABASE_URL</span> in your env,
+            run <span className="font-mono text-[13px] text-copper-300">npx drizzle-kit push</span>,
+            then reload.
+          </p>
+        </div>
+      </Shell>
+    );
+  }
+
   if (!r) notFound();
+  if (!ephemeral && !canSee(r.owner, await getCurrentOwner())) notFound();
 
   const sorted = [...r.sections].sort((a, b) => a.score - b.score);
 
   return (
     <Shell>
       <div className="mx-auto max-w-6xl px-6 py-14 md:px-10 md:py-20">
+        {ephemeral && (
+          <div className="mb-8 rounded-xl border border-copper-400/30 bg-copper-400/[0.07] px-5 py-4 text-[13px] leading-relaxed text-copper-200">
+            Ephemeral report — your database wasn&apos;t reachable, so this verdict lives in server
+            memory for one hour. Configure <span className="font-mono text-[12px]">DATABASE_URL</span>{" "}
+            + <span className="font-mono text-[12px]">npx drizzle-kit push</span> to make reports permanent.
+          </div>
+        )}
         <Reveal>
           <Link
             href="/dashboard"
@@ -215,7 +260,16 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
             </p>
           </Reveal>
           <Reveal delay={100}>
-            <CoachChat sections={r.sections} redFlags={r.redFlags} summary={r.summary} />
+            <CoachChat
+              deckId={r.id}
+              deckName={r.deckName}
+              score={r.score}
+              band={r.band}
+              sections={r.sections}
+              redFlags={r.redFlags}
+              summary={r.summary}
+              excerpt={r.excerpt}
+            />
           </Reveal>
         </div>
 

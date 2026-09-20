@@ -1,12 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function AnalyzeButton({ deckId }: { deckId: string }) {
-  const [loading, setLoading] = useState(false);
+  const { isSignedIn } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  const handleAnalyze = async () => {
+  const handleClick = async () => {
+    if (!isSignedIn) {
+      router.push("/sign-in"); // takes them to sign-in page instead of error
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/analyze", {
@@ -15,13 +22,16 @@ export default function AnalyzeButton({ deckId }: { deckId: string }) {
         body: JSON.stringify({ deckId }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        alert("Error: " + (data.error || "Analysis failed"));
+      if (res.ok) {
+        router.refresh();
+      } else if (data.redirect) {
+        // If API sends redirect (future proof)
+        window.location.href = data.redirect;
       } else {
-        router.refresh(); // smooth refresh — page updates with score
+        alert("Error: " + (data.error || "Analyze failed"));
       }
-    } catch (e: any) {
-      alert("Network error. Check console.");
+    } catch {
+      alert("Network error — please try again.");
     } finally {
       setLoading(false);
     }
@@ -29,9 +39,9 @@ export default function AnalyzeButton({ deckId }: { deckId: string }) {
 
   return (
     <button
-      onClick={handleAnalyze}
+      onClick={handleClick}
       disabled={loading}
-      className="bg-amber-400 text-[#080c16] font-bold px-8 py-3 rounded-full hover:bg-amber-300 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_30px_-10px_rgba(240,199,94,0.3)] text-lg"
+      className="bg-amber-400 text-[#080c16] font-bold px-8 py-3 rounded-full hover:bg-amber-300 transition disabled:opacity-50 shadow-[0_0_30px_-10px_rgba(240,199,94,0.3)] text-lg"
     >
       {loading ? "Analyzing..." : "Analyze Deck"}
     </button>

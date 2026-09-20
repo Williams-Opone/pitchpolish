@@ -26,7 +26,6 @@
   --animate-marquee: marquee 42s linear infinite;
   --animate-shimmer: shimmer 4s ease-in-out infinite;
   --animate-pulse-dot: pulse-dot 1.8s ease-in-out infinite;
-  --animate-float-slow: float-slow 7s ease-in-out infinite;
   --animate-scan: scan 3.4s ease-in-out infinite;
   --animate-gradient-x: gradient-x 6s ease infinite;
 }
@@ -49,11 +48,6 @@
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.35; transform: scale(0.72); }
-}
-
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-14px); }
 }
 
 @keyframes scan {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Instrument_Serif, Manrope, IBM_Plex_Mono } from "next/font/google";
 import { MotionProvider } from "@/components/premium";
 import "./globals.css";
@@ -32,11 +33,32 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const body = (
+    <body className="bg-ink-900 text-paper font-sans antialiased">
+      <MotionProvider>{children}</MotionProvider>
+    </body>
+  );
+
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
-      <body className="bg-ink-900 text-paper font-sans antialiased">
-        <MotionProvider>{children}</MotionProvider>
-      </body>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+    >
+      {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: "#d6814f",
+              colorBackground: "#100d0a",
+            },
+          }}
+        >
+          {body}
+        </ClerkProvider>
+      ) : (
+        body
+      )}
     </html>
   );
 }

@@ -21,9 +21,9 @@ if (typeof (global as any).Path2D === "undefined") {
 }
 
 export async function parsePdf(buffer: Buffer): Promise<{ text: string; nPages: number }> {
-  let pdfjs;
+  let pdfjs: any = null;
   try { pdfjs = require("pdfjs-dist/build/pdf.js"); }
-  catch { try { pdfjs = require("pdfjs-dist/legacy/build/pdf.js"); } 
+  catch { try { pdfjs = require("pdfjs-dist/legacy/build/pdf.js"); }
   catch { try { pdfjs = require("pdfjs-dist"); } catch { pdfjs = null; } }}
 
   if (pdfjs && pdfjs.getDocument) {
@@ -40,6 +40,6 @@ export async function parsePdf(buffer: Buffer): Promise<{ text: string; nPages: 
       console.error("pdfjs error:", e.message);
     }
   }
-  // If PDF parsing fails or file is .txt, treat as text
+  // Fallback for .txt uploads or broken pdfjs
   return { text: buffer.toString("utf-8"), nPages: 1 };
 }
