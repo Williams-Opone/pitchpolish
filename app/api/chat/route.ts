@@ -3,9 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import type { SectionScore } from "@/lib/types";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
-});
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 interface ChatRequestPayload {
   message: string;
@@ -35,12 +34,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
-        { reply: "GEMINI_API_KEY is not configured in your .env.local file." },
+        { reply: "GEMINI_API_KEY is not configured in your environment." },
         { status: 200 }
       );
     }
+
+    const ai = new GoogleGenAI({ apiKey });
 
     const sectionsSummary = (context.sections || [])
       .map((s) => `- ${s.label}: ${s.score}/10 (Weight: ${s.weight}%). Note: ${s.note}`)

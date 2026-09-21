@@ -6,6 +6,7 @@ import { reports, users } from "@/db/schema";
 import { clerkEnabled } from "@/lib/authMode";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * Sign-up / report counters.
@@ -22,13 +23,20 @@ export async function GET(req: Request) {
       { status: 404 }
     );
   }
+
   const header = req.headers.get("authorization") ?? "";
   if (header !== `Bearer ${token}`) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   try {
-    const [reportRow] = await db.select({ n: count() }).from(reports);
+    let reportCount = 0;
+    try {
+      const [reportRow] = await db.select({ n: count() }).from(reports);
+      reportCount = reportRow?.n ?? 0;
+    } catch (dbErr) {
+      console.warn("stats: database query failed or unconfigured:", dbErr);
+    }
 
     if (clerkEnabled) {
       const client = await clerkClient();
@@ -36,16 +44,23 @@ export async function GET(req: Request) {
       return NextResponse.json({
         driver: "clerk",
         signedUpUsers: total,
-        reports: reportRow?.n ?? 0,
+        reports: reportCount,
         note: "Clerk holds the full user records — see Dashboard → User Management for details.",
       });
     }
 
-    const [userRow] = await db.select({ n: count() }).from(users);
+    let userCount = 0;
+    try {
+      const [userRow] = await db.select({ n: count() }).from(users);
+      userCount = userRow?.n ?? 0;
+    } catch (dbErr) {
+      console.warn("stats: users query failed:", dbErr);
+    }
+
     return NextResponse.json({
       driver: "local",
-      signedUpUsers: userRow?.n ?? 0,
-      reports: reportRow?.n ?? 0,
+      signedUpUsers: userCount,
+      reports: reportCount,
     });
   } catch (err) {
     console.error("stats failed:", err);
