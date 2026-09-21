@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { reports } from "@/db/schema";
-import { analyzeText } from "@/lib/analyzer";
+import { analyzeTextHeuristically as analyzeText } from "@/lib/analyzer";
 import { SAMPLE_DECK_NAME, SAMPLE_DECK_TEXT, SAMPLE_FILE_NAME, SAMPLE_SLIDE_COUNT } from "@/lib/sample";
 
 export const runtime = "nodejs";
