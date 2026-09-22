@@ -6,7 +6,7 @@ const databaseUrl = process.env.DATABASE_URL;
 
 const pool = new Pool({
   connectionString:
-    databaseUrl || "postgresql://postgres:postgres@localhost:5432/placeholder",
+    databaseUrl || "postgresql://postgres:postgres@localhost:5432/postgres",
 });
 
 export const db = drizzle(pool, { schema });
